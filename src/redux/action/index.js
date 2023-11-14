@@ -1,15 +1,27 @@
-// For Add Item to Cart
-export const addCart = (product) =>{
+
+export const setCart = (cart) => {
     return {
-        type:"ADDITEM",
-        payload:product
+        type: "SETCART",
+        payload: cart
     }
 }
 
-// For Delete Item from Cart
-export const delCart = (product) =>{
+export const resetCart = () => {
     return {
-        type:"DELITEM",
-        payload:product
+        type: "RESETCART"
+    }
+}
+
+// for successful login
+export const loginSuccess = (payload) => {
+    return {
+        type: 'LOGIN_SUCCESS',
+        payload
+    }
+}
+
+export const logout = () => {
+    return {
+        type: 'LOGOUT'
     }
 }

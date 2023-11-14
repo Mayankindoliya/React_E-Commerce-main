@@ -1,8 +1,47 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Footer, Navbar } from "../components";
+import { useState } from "react";
+import axios from "axios";
+import Swal from "sweetalert2";
+import { useDispatch } from "react-redux";
+import { loginSuccess } from "../redux/action";
 
 const Login = () => {
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const onSubmit = (event) => {
+    event.preventDefault();
+
+    axios.post(`http://localhost:4000/login`, {
+      email, password
+    })
+      .then((result) => {
+        if (result.status === 200) {
+          dispatch(loginSuccess(result.data.data))
+          navigate('/');
+        }
+        else {
+          // Handle unexpected response structure
+          console.log('Unexpected response structure:', result);
+        }
+
+      })
+      .catch((error) => {
+        console.log(error);
+        Swal.fire({
+          icon: 'error',
+          title: error.response.data.error
+        })
+      })
+
+  }
+
   return (
     <>
       <Navbar />
@@ -11,7 +50,7 @@ const Login = () => {
         <hr />
         <div class="row my-4 h-100">
           <div className="col-md-4 col-lg-4 col-sm-8 mx-auto">
-            <form>
+            <form onSubmit={(e) => onSubmit(e)}>
               <div class="my-3">
                 <label for="display-4">Email address</label>
                 <input
@@ -19,6 +58,9 @@ const Login = () => {
                   class="form-control"
                   id="floatingInput"
                   placeholder="name@example.com"
+                  required
+                  value={email}
+                  onChange={(ev) => setEmail(ev.target.value)}
                 />
               </div>
               <div class="my-3">
@@ -28,13 +70,16 @@ const Login = () => {
                   class="form-control"
                   id="floatingPassword"
                   placeholder="Password"
+                  required
+                  value={password}
+                  onChange={(ev) => setPassword(ev.target.value)}
                 />
               </div>
               <div className="my-3">
                 <p>New Here? <Link to="/register" className="text-decoration-underline text-info">Register</Link> </p>
               </div>
               <div className="text-center">
-                <button class="my-2 mx-auto btn btn-dark" type="submit" disabled>
+                <button class="my-2 mx-auto btn btn-dark" type="submit">
                   Login
                 </button>
               </div>

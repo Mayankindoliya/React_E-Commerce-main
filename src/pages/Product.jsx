@@ -2,11 +2,12 @@ import React, { useEffect, useState } from "react";
 import Skeleton from "react-loading-skeleton";
 import { Link, useParams } from "react-router-dom";
 import Marquee from "react-fast-marquee";
-import { useDispatch } from "react-redux";
-import { addCart } from "../redux/action";
+import { useDispatch, useSelector } from "react-redux";
+import { setCart } from "../redux/action";
 
 import { Footer, Navbar } from "../components";
 import axios from "axios";
+import Swal from "sweetalert2";
 
 const Product = () => {
   const { id } = useParams();
@@ -15,21 +16,36 @@ const Product = () => {
   const [loading, setLoading] = useState(false);
   const [loading2, setLoading2] = useState(false);
 
+  const { token } = useSelector(state => state.user)
+
   const dispatch = useDispatch();
 
-  const addProduct = (product) => {
-    dispatch(addCart(product));
+  const addProduct = async (product) => {
+    product.quantity = 1
+    const { data } = await axios.post('http://localhost:4000/carts', {
+      product: product,
+      action: 'add'
+    }, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    dispatch(setCart(data.data))
+    Swal.fire({
+      icon: 'success',
+      title: 'product added successfully'
+    })
   };
 
   useEffect(() => {
     const getProduct = async () => {
       setLoading(true);
       setLoading2(true);
-      const {data} = await axios.get(`http://localhost:4000/products/${id}`)
+      const { data } = await axios.get(`http://localhost:4000/products/${id}`)
       const product = data.data
       setProduct(product);
       setLoading(false);
-      const {data: response2} = await axios.get(`http://localhost:4000/products/category/${product.category}`)
+      const { data: response2 } = await axios.get(`http://localhost:4000/products/category/${product.category}`)
       const similarProducts = response2.data;
       setSimilarProducts(similarProducts);
       setLoading2(false);
@@ -174,7 +190,7 @@ const Product = () => {
         <div className="row">{loading ? <Loading /> : <ShowProduct />}</div>
         <div className="row my-5 py-5">
           <div className="d-none d-md-block">
-          <h2 className="">You may also Like</h2>
+            <h2 className="">You may also Like</h2>
             <Marquee
               pauseOnHover={true}
               pauseOnClick={true}

@@ -1,9 +1,29 @@
 import React from "react";
 import { Footer, Navbar } from "../components";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
+import Swal from "sweetalert2";
+import { resetCart } from "../redux/action";
+import axios from "axios";
+
 const Checkout = () => {
-  const state = useSelector((state) => state.handleCart);
+  const cart = useSelector((state) => state.handleCart);
+  const { token } = useSelector(state => state.user)
+  const dispatch = useDispatch()
+
+  const onSubmit = async (event) => {
+    event.preventDefault();
+    const {data} = await axios.put(`http://localhost:4000/carts/${cart._id}`, {}, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+    Swal.fire({
+      icon: 'success',
+      title: 'Order Placed Successfully!'
+    })
+    dispatch(resetCart())
+  }
 
   const EmptyCart = () => {
     return (
@@ -21,16 +41,7 @@ const Checkout = () => {
   };
 
   const ShowCheckout = () => {
-    let subtotal = 0;
-    let shipping = 30.0;
-    let totalItems = 0;
-    state.map((item) => {
-      return (subtotal += item.price * item.qty);
-    });
-
-    state.map((item) => {
-      return (totalItems += item.qty);
-    });
+    const subTotal = cart.products.reduce((acc, curr) => acc + curr.price, 0);
     return (
       <>
         <div className="container py-5">
@@ -43,18 +54,18 @@ const Checkout = () => {
                 <div className="card-body">
                   <ul className="list-group list-group-flush">
                     <li className="list-group-item d-flex justify-content-between align-items-center border-0 px-0 pb-0">
-                      Products ({totalItems})<span>${Math.round(subtotal)}</span>
+                      Products ({cart.totalQuantity})<span>${subTotal}</span>
                     </li>
                     <li className="list-group-item d-flex justify-content-between align-items-center px-0">
                       Shipping
-                      <span>${shipping}</span>
+                      <span>${cart.shippingFee}</span>
                     </li>
                     <li className="list-group-item d-flex justify-content-between align-items-center border-0 px-0 mb-3">
                       <div>
                         <strong>Total amount</strong>
                       </div>
                       <span>
-                        <strong>${Math.round(subtotal + shipping)}</strong>
+                        <strong>${cart.totalAmount}</strong>
                       </span>
                     </li>
                   </ul>
@@ -67,7 +78,7 @@ const Checkout = () => {
                   <h4 className="mb-0">Billing address</h4>
                 </div>
                 <div className="card-body">
-                  <form className="needs-validation" novalidate>
+                  <form onSubmit={onSubmit} className="needs-validation">
                     <div className="row g-3">
                       <div className="col-sm-6 my-1">
                         <label for="firstName" className="form-label">
@@ -269,7 +280,7 @@ const Checkout = () => {
 
                     <button
                       className="w-100 btn btn-primary "
-                      type="submit" disabled
+                      type="submit"
                     >
                       Continue to checkout
                     </button>
@@ -288,7 +299,7 @@ const Checkout = () => {
       <div className="container my-3 py-3">
         <h1 className="text-center">Checkout</h1>
         <hr />
-        {state.length ? <ShowCheckout /> : <EmptyCart />}
+        {cart ? <ShowCheckout /> : <EmptyCart />}
       </div>
       <Footer />
     </>

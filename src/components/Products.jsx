@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { useDispatch } from "react-redux";
-import { addCart } from "../redux/action";
+import { useDispatch, useSelector } from "react-redux";
+import { setCart } from "../redux/action";
 
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 
 import { Link } from "react-router-dom";
 import axios from "axios";
+import Swal from "sweetalert2";
 
 const Products = () => {
   const [data, setData] = useState([]);
@@ -14,16 +15,31 @@ const Products = () => {
   const [loading, setLoading] = useState(false);
   let componentMounted = true;
 
+  const { token } = useSelector(state => state.user)
+
   const dispatch = useDispatch();
 
-  const addProduct = (product) => {
-    dispatch(addCart(product))
-  }
+  const addProduct = async (product) => {
+    product.quantity = 1
+    const { data } = await axios.post('http://localhost:4000/carts', {
+      product: product,
+      action: 'add'
+    }, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    dispatch(setCart(data.data))
+    Swal.fire({
+      icon: 'success',
+      title: 'product added successfully'
+    })
+  };
 
   useEffect(() => {
     const getProducts = async () => {
       setLoading(true);
-      const {data} = await axios.get('http://localhost:4000/products')
+      const { data } = await axios.get('http://localhost:4000/products')
       if (componentMounted) {
         setData(data.data);
         setFilter(data.data);
@@ -85,7 +101,7 @@ const Products = () => {
 
         {filter.map((product) => {
           return (
-            <div id={product.id} key={product.id} className="col-md-4 col-sm-6 col-xs-8 col-12 mb-4">
+            <div id={product._id} key={product._id} className="col-md-4 col-sm-6 col-xs-8 col-12 mb-4">
               <div className="card text-center h-100" key={product.id}>
                 <img
                   className="card-img-top p-3"
